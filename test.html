@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TEST</title>
+</head>
+<body>
+
+</body>
+<footer>
+	<script type="text/javascript">
+		'use strict';
+		var route = "RFLFLLFRFFFWW";
+		let hojaRutas = `5 3
+						 1 1 W
+						 RFRFRFRF`
+		var coordenadas = {
+			"N":0,
+			"S":0,
+			"E":1,
+			"w":1,
+		}
+
+		let par = ""
+		/**
+		 * Recoremos la hoja de rutas bajo los siguientes parametros:
+		 * 1- Tamaño de la cudricula (max 50x50)
+		 * 2- Las instrucciones del rover estan dividas en dos partes:
+		 * 	2.a- Posicion inicial orientacion (ej, 1 1 W)
+		 * 	2.b- Recorido del rover, escrito con tres letras: 
+		 * 		i- R(mover 90º a la derecha)
+		 * 		ii- L(mover 90º a la izquierda)
+		 * 		iii- F(mover el rover una casilla)
+		 * 	P.D Siempre que el rover se salga de la cuadricula, marcamos su ultima posicion y le ponemos la etiqueta LOST
+		 * 	
+		 */
+		for(let move of hojaRutas)
+		{
+			if(move == "\n"){
+				this.move(par);
+			}else{
+				par += move;
+			}
+		}
+
+		function move(param)
+		{
+			console.log(param)
+		}
+	</script>
+</footer>
+</html>
