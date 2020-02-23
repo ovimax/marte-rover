@@ -1,0 +1,27 @@
+{
+  "name": "marte-rover",
+  "version": "1.0.0",
+  "description": "Solve a Nodejs marte rover problem",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ovimax/marte-rover.git"
+  },
+  "keywords": [
+    "marte",
+    "rover",
+    "problem"
+  ],
+  "author": "Ovidiu Muresan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ovimax/marte-rover/issues"
+  },
+  "homepage": "https://github.com/ovimax/marte-rover#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
