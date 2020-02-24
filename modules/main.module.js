@@ -1,55 +1,42 @@
-const fs = require ('fs');
+const fs		= require ('fs');
+const config	= require("../config")();
 
-//Classes
-const Errors = require("./error.module");
-const Maps = require("./map.module");
-const Rover = require("./rover.module");
-
-const routeSheet = './route_sheet.txt';
-let error = false;
+// Modules
+const Maps	= require("./maps.module")();
+const Rover	= require("./rover.module")();
 
 const __init = async () => {
-	let response = await __getRouteSheet();
-	console.log(response)
-	return response;
-}
+	try {
+		// Leer la hoja de rutas y convertir los datos en array
+		let dataFile = fs.readFileSync(config.routeSheet, 'utf8');
+		let arrData = dataFile.split("\n");
 
-	/**
-	 * Read the route sheet info and create 
-	 */
-const __getRouteSheet = async () =>{
-	let response;
-	fs.readFile(routeSheet, 'utf8', async (err, datos) => {
-		if (err){
-			error = true;
-			console.log(err)
-			response = await Errors.launchError(500,"");
-		} else {
-			let data = datos.split("\n");
-			response = datos
-		}
-		//this.setMap(data);
-	});
+		// Definir el tamaño del mapa
+		let map = await Maps.setMapSize(arrData);
+		if (map.errorCode) { return map; }
 
-	return response;
-}
-/*
-	setMap(data)
-	{
-		if(response[0].length == 3){
-			let pos = r[0].split(" ");
-			map.setMapSize(parseInt(pos[0],10),parseInt(pos[1],10));
-			data = data.shift();
-			setRovers()
-		} else {
-			return new Error({code:100,msg:""});
-		}
+		// Retirar la informacion del mapa del array de datos
+		arrData = arrData.slice(1,arrData.length);
+
+		// Definimos una coleccion de rovers
+		let rovers = await Rover.setRoverCollection(arrData);
+		if (rovers.errorCode) { return rovers; }
+		return rovers;
+	} catch (error) {
+    	return { errorCode: 500, error: "ERROR into __init" };
 	}
+}
 
-	set
-*/
+const __moveRovers = async (rovers) => {
+	try {
 
-module.exports =  {
-	init:__init,
-	getRouteSheet:__getRouteSheet,
-};
+	} catch (error) {
+    	return { errorCode: 500, error: "ERROR into __moveRovers" };
+	}
+}
+
+module.exports = () => {
+	return {
+		init:__init,
+	};
+} 
