@@ -1,7 +1,14 @@
 <!DOCTYPE html>
 <html>
+<style type="text/css">
+	.error {
+		color:red;
+		font-weight: bold;
+	}
+</style>
 <head>
 	<title>TEST</title>
+	<div class="error" id="error"></div>
 </head>
 <body>
 
@@ -9,42 +16,80 @@
 <footer>
 	<script type="text/javascript">
 		'use strict';
-		var route = "RFLFLLFRFFFWW";
+		var a;
+		var robots = [];
 		let hojaRutas = `5 3
-						 1 1 W
-						 RFRFRFRF`
-		var coordenadas = {
-			"N":0,
-			"S":0,
-			"E":1,
-			"w":1,
+1 1 E
+RFRFRFRF
+3 2 N
+FRRFLLFFRRFLL
+0 3 W
+LLFFFLFLFL`;
+
+		var coordenas = {
+			N:[0,1],
+			S:[0,-1],
+			E:[1,0],
+			W:[-1,0]
+		}
+		var cardinals = ["N","E","S","W"];
+		let arrHojaRutas = hojaRutas.split("\n");
+
+		if (arrHojaRutas[0].length == 3)
+		{
+			a = arrHojaRutas[0].split(" ");
+			var mapSize = [parseInt(a[0]),parseInt(a[1])];
+			arrHojaRutas = arrHojaRutas.slice(1,arrHojaRutas.length);
+		} else {
+			document.getElementById('error').innerHTML = "MAP NOT DEFINED";
 		}
 
-		let par = ""
-		/**
-		 * Recoremos la hoja de rutas bajo los siguientes parametros:
-		 * 1- Tamaño de la cudricula (max 50x50)
-		 * 2- Las instrucciones del rover estan dividas en dos partes:
-		 * 	2.a- Posicion inicial orientacion (ej, 1 1 W)
-		 * 	2.b- Recorido del rover, escrito con tres letras: 
-		 * 		i- R(mover 90º a la derecha)
-		 * 		ii- L(mover 90º a la izquierda)
-		 * 		iii- F(mover el rover una casilla)
-		 * 	P.D Siempre que el rover se salga de la cuadricula, marcamos su ultima posicion y le ponemos la etiqueta LOST
-		 * 	
-		 */
-		for(let move of hojaRutas)
+		if (arrHojaRutas.length%2 != 0){
+			document.getElementById('error').innerHTML = "ROUTE SHEET ERROR";
+		}
+
+		for(let i = 0; i<arrHojaRutas.length;i++)
 		{
-			if(move == "\n"){
-				this.move(par);
-			}else{
-				par += move;
+			if(i%2 == 0)
+			{
+				let robot = {
+					pos: arrHojaRutas[i],
+					route: arrHojaRutas[i+1],
+				};
+				robots.push(robot);
 			}
 		}
 
-		function move(param)
-		{
-			console.log(param)
+		for (let robot of robots) {
+			this.move(robot)
+		}
+
+		function move(robot){
+			let arrPos = robot.pos.split(" ");
+			let sRoute = robot.route;
+			let currentPos = [parseInt(arrPos[0]),parseInt(arrPos[1])]
+			let currentCoor = coordenas[arrPos[2]];
+			let curentCar = cardinals.indexOf(arrPos[2])
+
+			console.log(currentPos)
+
+			for (let r of sRoute)
+			{
+				if(r != "F"){
+					if (r=="R"){
+						curentCar = (curentCar+1==cardinals.length)?0:curentCar+1;
+					} else {
+						curentCar = (curentCar-1<0)?(cardinals.length-1):curentCar-1;
+					}
+				}else{
+					let newCar = cardinals[curentCar]
+					currentPos[0] = currentPos[0] + coordenas[newCar][0];
+					currentPos[1] = currentPos[1] + coordenas[newCar][1];
+				} 
+			}
+
+			console.log(currentPos)
+			console.log(cardinals[curentCar])
 		}
 	</script>
 </footer>
