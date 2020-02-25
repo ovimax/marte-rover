@@ -10,6 +10,6 @@ Go to proyect path.
 
 Launch commands in the terminal:
 ```sh
-$ npm init
+$ npm install
 $ npm start
 ```

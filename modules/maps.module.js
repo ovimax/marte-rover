@@ -13,7 +13,7 @@ const __setMapSize = async (data) => {
 		mapSize[1] = parseInt(mapSize[1]);
 
 		// Verificar si hemos recibido la informacion del mapa
-		if ( mapSize.length != 2){
+		if ( mapSize.length != 2 || mapSize.includes(NaN)){
 			mapSize = [0,0];
 			return { errorCode: 400, error: "El tamaño del mapa no esta definido en la hoja de rutas" };
 		}
