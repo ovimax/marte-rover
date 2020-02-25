@@ -51,8 +51,8 @@ const __checkRoverData = async (roverData) => {
 	}
 
 	let mapSize = await Maps.getMapSize();
-	let roverPosX = roverPos[0];
-	let roverPosY = roverPos[1];
+	let roverPosX = parseInt(roverPos[0]);
+	let roverPosY = parseInt(roverPos[1]);
 
 	if ( roverPosX > mapSize[0] || roverPosY > mapSize[1]) 
 	{
