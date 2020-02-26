@@ -8,6 +8,10 @@ var lostRovers = [];
 var newPosRover = [];
 var response = `<h3>Welcome to Rover Marte</h3><span><b>INPUT:</b></span><br>[[INPUT]]<br><br><span><b>OUTPUT:</b></span><br>[[OUTPUT]]`;
 
+/**
+ * Iniciamos la prueba Rover Marte
+ * @return {[string]} [respuesta de la prueba]
+ */
 const __init = async () => {
 	try {
 		let initConfig = await __setInitialConfigurations();
@@ -24,10 +28,15 @@ const __init = async () => {
 	}
 }
 
+/**
+ * Definimos las configuraciones iniciales
+ * @return {[bool]}
+ */
 const __setInitialConfigurations = async () => {
 	try	{
 		// Leer la hoja de rutas y convertir los datos en array
 		let dataFile = fs.readFileSync(config.routeSheet, 'utf8');
+		dataFile = dataFile.replace(/\r?\r/g, "");
 		let arrData = dataFile.split("\n");
 		response = response.replace("[[INPUT]]",arrData.join("<br>"))
 
@@ -48,7 +57,11 @@ const __setInitialConfigurations = async () => {
 	}
 }
 
-const __moveRovers = async (rovers) => {
+/**
+ * Movemos cada rover por el mapa, segun su ruta
+ * @return {[bool ]}
+ */
+const __moveRovers = async () => {
 	try {
 
 		let cartesians = config.cartesians;
@@ -57,7 +70,7 @@ const __moveRovers = async (rovers) => {
 
 		let rovers = await Rover.getRoverCollection();
 		if (rovers.length == 0) {
-			return { errorCode: 404, error: "No existes rovers" };
+			return { errorCode: 404, error: "No existen rovers" };
 		}
 
 		for (let rover of rovers)
@@ -83,9 +96,9 @@ const __moveRovers = async (rovers) => {
 						let checkLost = await __checkLostRovers(currentP,currentO);
 
 						if(checkLost){
-							let newCar = compass[currentO]
-							currentP[0] = currentP[0] + cartesians[newCar][0];
-							currentP[1] = currentP[1] + cartesians[newCar][1];
+							let newO  = compass[currentO]
+							currentP[0] = currentP[0] + cartesians[newO ][0];
+							currentP[1] = currentP[1] + cartesians[newO ][1];
 						}
 					} 
 					if (await __checkCurrentPosition(currentP) )
@@ -93,12 +106,13 @@ const __moveRovers = async (rovers) => {
 						oldP = [currentP[0],currentP[1]];
 						oldO = currentO;
 					} else {
+						// Recogemos en un array los rover perdidos, para que futuros rovers no se pierdan
 						lostRovers.push({
 								position:oldP,
 								orientation: oldO,
 							});
 						lost = true;
-						break
+						break;
 					}
 				}
 			}
@@ -107,7 +121,7 @@ const __moveRovers = async (rovers) => {
 				position:oldP,
 				orientation: oldO,
 				lost:lost,
-			})
+			});
 		}
 		return true;
 	} catch (error) {
@@ -115,6 +129,12 @@ const __moveRovers = async (rovers) => {
 	}
 }
 
+
+/**
+ * Verificamos si el rover se ha salido del mapa
+ * @param  {[array]} currentP [Posicion [x,y] del rover]
+ * @return {[bool]}  
+ */
 const __checkCurrentPosition = async (currentP) => {
 	try {
 		let mapSize = await Maps.getMapSize();
@@ -128,6 +148,12 @@ const __checkCurrentPosition = async (currentP) => {
 	}
 }
 
+/**
+ * Verificamos si la poscion y orientacion actuales de un rover coincide con la de un rover perdido
+ * @param  {[array]} currentP [posocion [x,y] actuales del rover]
+ * @param  {[int]} currentO [orientacion actual del rover]
+ * @return {[bool]}
+ */
 const __checkLostRovers = async (currentP,currentO) => {
 	try {	
 		if(lostRovers.length > 0)
@@ -146,6 +172,10 @@ const __checkLostRovers = async (currentP,currentO) => {
 	}
 }
 
+/**
+ * Definimos la respuesta con las ultimas posiciones de cada rover
+ * @return {[string]}
+ */
 const __setOutputSheet = () => {
 	try {
 		let output = "";

@@ -12,5 +12,5 @@ app.get('/', async (req, res) => {
 });
 
 app.listen(3000, async () => {
-  console.error('Aplicación ejemplo, escuchando el puerto 3000!');
+  console.error('Aplicación activada, escuchando el puerto 3000!');
 });

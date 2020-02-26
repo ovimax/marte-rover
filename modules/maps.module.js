@@ -1,10 +1,12 @@
 const config	= require("../config")();
 let mapSize = [0,0];
 
+const __getMapSize = async () => { return mapSize; }
+
 /**
  * Definimos el tamaño del mapa
  * @param  {[array]} data [datos de la hoja de rutas]
- * @return {[array]}      [Puntso maximos [x,y] del mapa]
+ * @return {[array]}      [Puntos maximos [x,y] del mapa]
  */
 const __setMapSize = async (data) => {
 	try {
@@ -29,14 +31,9 @@ const __setMapSize = async (data) => {
 	}
 }
 
-const __getMapSize = async () => {
-	return mapSize;
-}
-
-
 module.exports = () => {
 	return {
-		setMapSize:__setMapSize,
 		getMapSize:__getMapSize,
+		setMapSize:__setMapSize,
 	};
 }
