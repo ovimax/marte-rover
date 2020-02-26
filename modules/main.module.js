@@ -4,6 +4,9 @@ const config	= require("../config")();
 // Modules
 const Maps	= require("./maps.module")();
 const Rover	= require("./rover.module")();
+var lostRovers = [];
+var newPosRover = [];
+var response = `<h3>Welcome to Rover Marte</h3><span><b>INPUT:</b></span><br>[[INPUT]]<br><br><span><b>OUTPUT:</b></span><br>[[OUTPUT]]`;
 
 const __init = async () => {
 	try {
@@ -13,7 +16,9 @@ const __init = async () => {
 		let initMove = await __moveRovers();
 		if (initMove.errorCode) { return initMove; }
 
-		return "Welcome to Rover Marte";
+		let outputSheet  = await __setOutputSheet();
+
+		return response;
 	} catch (error) {
     	return { errorCode: 500, error: "ERROR into __init" };
 	}
@@ -24,6 +29,7 @@ const __setInitialConfigurations = async () => {
 		// Leer la hoja de rutas y convertir los datos en array
 		let dataFile = fs.readFileSync(config.routeSheet, 'utf8');
 		let arrData = dataFile.split("\n");
+		response = response.replace("[[INPUT]]",arrData.join("<br>"))
 
 		// Definir el tamaño del mapa
 		let map = await Maps.setMapSize(arrData);
@@ -47,6 +53,7 @@ const __moveRovers = async (rovers) => {
 
 		let cartesians = config.cartesians;
 		let compass = config.compass;
+		let lost;
 
 		let rovers = await Rover.getRoverCollection();
 		if (rovers.length == 0) {
@@ -60,33 +67,48 @@ const __moveRovers = async (rovers) => {
 			let currentP = [parseInt(arrPos[0]),parseInt(arrPos[1])]
 			let currentO = compass.indexOf(arrPos[2])
 
-
-			console.log(currentP)
-			console.log(currentO)
-
 			let oldP = [currentP[0],currentP[1]];
 			let oldO = currentO;
-
+			lost = false;
 			for (let r of sRoute)
 			{
-				if(r != "F"){
-					if (r=="R"){
-						currentO = (currentO+1==compass.length)?0:currentO+1;
+				if (!lost){
+					if(r != "F"){
+						if (r=="R"){
+							currentO = (currentO+1==compass.length)?0:currentO+1;
+						} else {
+							currentO = (currentO-1<0)?(compass.length-1):currentO-1;
+						}
+					}else{
+						let checkLost = await __checkLostRovers(currentP,currentO);
+
+						if(checkLost){
+							let newCar = compass[currentO]
+							currentP[0] = currentP[0] + cartesians[newCar][0];
+							currentP[1] = currentP[1] + cartesians[newCar][1];
+						}
+					} 
+					if (await __checkCurrentPosition(currentP) )
+					{
+						oldP = [currentP[0],currentP[1]];
+						oldO = currentO;
 					} else {
-						currentO = (currentO-1<0)?(compass.length-1):currentO-1;
+						lostRovers.push({
+								position:oldP,
+								orientation: oldO,
+							});
+						lost = true;
+						break
 					}
-				}else{
-					let newCar = compass[currentO]
-					currentP[0] = currentP[0] + cartesians[newCar][0];
-					currentP[1] = currentP[1] + cartesians[newCar][1];
-				} 
-				break;
+				}
 			}
-			console.log(currentP)
-			console.log(oldP);
 
+			newPosRover.push({
+				position:oldP,
+				orientation: oldO,
+				lost:lost,
+			})
 		}
-
 		return true;
 	} catch (error) {
     	return { errorCode: 500, error: "ERROR into __moveRovers" };
@@ -103,6 +125,39 @@ const __checkCurrentPosition = async (currentP) => {
 		return true
 	} catch (error) {
     	return { errorCode: 500, error: "ERROR into __checkCurrentPosition" };
+	}
+}
+
+const __checkLostRovers = async (currentP,currentO) => {
+	try {	
+		if(lostRovers.length > 0)
+		{
+			for(let lost of lostRovers){	
+				if (JSON.stringify(lost.position)==JSON.stringify(currentP) && lost.orientation == currentO)
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
+	} catch (error) {
+    	return { errorCode: 500, error: "ERROR into __checkLostRovers" };
+	}
+}
+
+const __setOutputSheet = () => {
+	try {
+		let output = "";
+		for (let rover of newPosRover)
+		{
+			let lost = (rover.lost)?" LOST":"";
+			output += `${rover.position[0]} ${rover.position[1]} ${config.compass[rover.orientation]}${lost}<br>`
+		}
+		response = response.replace("[[OUTPUT]]",output)
+		return output;
+	} catch (error) {
+    	return { errorCode: 500, error: "ERROR into __setOutputSheet" };
 	}
 }
 

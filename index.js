@@ -9,7 +9,6 @@ app.get('/', async (req, res) => {
 	} catch (error) {
     	return { errorCode: 500, error: error };
 	}
-	
 });
 
 app.listen(3000, async () => {
