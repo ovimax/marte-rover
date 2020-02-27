@@ -4,9 +4,15 @@ const config	= require("../config")();
 // Modules
 const Maps	= require("./maps.module")();
 const Rover	= require("./rover.module")();
-var lostRovers = [];
-var newPosRover = [];
-var response = `<h3>Welcome to Rover Marte</h3><span><b>INPUT:</b></span><br>[[INPUT]]<br><br><span><b>OUTPUT:</b></span><br>[[OUTPUT]]`;
+
+// Variables
+let lostRovers = [],
+	newPosRover,
+	response = `<h3>Welcome to Rover Marte</h3><span><b>INPUT:</b></span><br>[[INPUT]]<br><br><span><b>OUTPUT:</b></span><br>[[OUTPUT]]`,
+	cartesians = config.cartesians,
+	compass = config.compass,
+	mapSize,
+	rovers;
 
 /**
  * Iniciamos la prueba Rover Marte
@@ -41,14 +47,14 @@ const __setInitialConfigurations = async () => {
 		response = response.replace("[[INPUT]]",arrData.join("<br>"))
 
 		// Definir el tamaño del mapa
-		let map = await Maps.setMapSize(arrData);
-		if (map.errorCode) { return map; }
+		mapSize = await Maps.setMapSize(arrData);
+		if (mapSize.errorCode) { return mapSize; }
 
 		// Retirar la informacion del mapa del array de datos
 		arrData = arrData.slice(1,arrData.length);
 
 		// Definimos una coleccion de rovers
-		let rovers = await Rover.setRoverCollection(arrData);
+		rovers = await Rover.setRoverCollection(arrData);
 		if (rovers.errorCode) { return rovers; }
 
 		return true;
@@ -61,114 +67,15 @@ const __setInitialConfigurations = async () => {
  * Movemos cada rover por el mapa, segun su ruta
  * @return {[bool ]}
  */
-const __moveRovers = async () => {
+const __moveRovers = () => {
 	try {
+		if (rovers.length == 0) { return { errorCode: 404, error: "No existen rovers" }; }
 
-		let cartesians = config.cartesians;
-		let compass = config.compass;
-		let lost;
-
-		let rovers = await Rover.getRoverCollection();
-		if (rovers.length == 0) {
-			return { errorCode: 404, error: "No existen rovers" };
-		}
-
-		for (let rover of rovers)
-		{
-			let arrPos = rover.pos.split(" ");
-			let sRoute = rover.route;
-			let currentP = [parseInt(arrPos[0]),parseInt(arrPos[1])]
-			let currentO = compass.indexOf(arrPos[2])
-
-			let oldP = [currentP[0],currentP[1]];
-			let oldO = currentO;
-			lost = false;
-			for (let r of sRoute)
-			{
-				if (!lost){
-					if(r != "F"){
-						if (r=="R"){
-							currentO = (currentO+1==compass.length)?0:currentO+1;
-						} else {
-							currentO = (currentO-1<0)?(compass.length-1):currentO-1;
-						}
-					}else{
-						let checkLost = await __checkLostRovers(currentP,currentO);
-
-						if(checkLost){
-							let newO  = compass[currentO]
-							currentP[0] = currentP[0] + cartesians[newO ][0];
-							currentP[1] = currentP[1] + cartesians[newO ][1];
-						}
-					} 
-					if (await __checkCurrentPosition(currentP) )
-					{
-						oldP = [currentP[0],currentP[1]];
-						oldO = currentO;
-					} else {
-						// Recogemos en un array los rover perdidos, para que futuros rovers no se pierdan
-						lostRovers.push({
-								position:oldP,
-								orientation: oldO,
-							});
-						lost = true;
-						break;
-					}
-				}
-			}
-
-			newPosRover.push({
-				position:oldP,
-				orientation: oldO,
-				lost:lost,
-			});
-		}
+		newPosRover = rovers.map(rover => {return __move(rover)})
+		
 		return true;
 	} catch (error) {
     	return { errorCode: 500, error: "ERROR into __moveRovers" };
-	}
-}
-
-
-/**
- * Verificamos si el rover se ha salido del mapa
- * @param  {[array]} currentP [Posicion [x,y] del rover]
- * @return {[bool]}  
- */
-const __checkCurrentPosition = async (currentP) => {
-	try {
-		let mapSize = await Maps.getMapSize();
-
-		if(currentP[0] > mapSize[0] || currentP[0] < 0){ return false; }
-		if(currentP[1] > mapSize[1] || currentP[1] < 0){ return false; }
-
-		return true
-	} catch (error) {
-    	return { errorCode: 500, error: "ERROR into __checkCurrentPosition" };
-	}
-}
-
-/**
- * Verificamos si la poscion y orientacion actuales de un rover coincide con la de un rover perdido
- * @param  {[array]} currentP [posocion [x,y] actuales del rover]
- * @param  {[int]} currentO [orientacion actual del rover]
- * @return {[bool]}
- */
-const __checkLostRovers = async (currentP,currentO) => {
-	try {	
-		if(lostRovers.length > 0)
-		{
-			for(let lost of lostRovers){	
-				if (JSON.stringify(lost.position)==JSON.stringify(currentP) && lost.orientation == currentO)
-				{
-					return false;
-				}
-			}
-		}
-
-		return true;
-	} catch (error) {
-    	return { errorCode: 500, error: "ERROR into __checkLostRovers" };
 	}
 }
 
@@ -190,6 +97,103 @@ const __setOutputSheet = () => {
     	return { errorCode: 500, error: "ERROR into __setOutputSheet" };
 	}
 }
+
+/**
+ * FUNCTIONS
+ */
+
+/**
+ * Mover un rover
+ * @param  {[JSON]} rover [posicion inicial del rover]
+ * @return {[JOSN]}       [posicion final del rover]
+ */
+function __move(rover) {
+	let arrPos = rover.pos.split(" ");
+		sRoute = rover.route,
+		currentP = [parseInt(arrPos[0]),parseInt(arrPos[1])],
+		currentO = compass.indexOf(arrPos[2]),
+		oldP = [currentP[0],currentP[1]],
+		oldO = currentO,
+		lost = false;
+
+	for (let r of sRoute){
+		if (!lost) {
+			if(r != "F"){
+				if (r=="R"){
+					currentO = (currentO+1==compass.length)?0:currentO+1;
+				} else {
+					currentO = (currentO-1<0)?(compass.length-1):currentO-1;
+				}
+			}else{
+				let checkLost = __checkLostRovers(currentP,currentO);
+
+				if(checkLost){
+					let newO  = compass[currentO];
+					currentP[0] = currentP[0] + cartesians[newO][0];
+					currentP[1] = currentP[1] + cartesians[newO][1];
+				}
+			}
+
+			if ( __checkCurrentPosition(currentP) )
+			{
+				oldP = [currentP[0],currentP[1]];
+				oldO = currentO;
+			} else {
+				// Recogemos en un array los rover perdidos, para que futuros rovers no se pierdan
+				lostRovers.push({
+						position:oldP,
+						orientation: oldO,
+					});
+				lost = true;
+				break;
+			}
+		}
+	}
+	return {
+		position:oldP,
+		orientation: oldO,
+		lost:lost,
+	};
+}
+
+function __changeOrientation(currentO,orientation)
+{
+
+}
+
+
+/**
+ * Verificamos si el rover se ha salido del mapa
+ * @param  {[array]} currentP [Posicion [x,y] del rover]
+ * @return {[bool]}  
+ */
+function __checkCurrentPosition(currentP){
+	if(currentP[0] > mapSize[0] || currentP[0] < 0){ return false; }
+	if(currentP[1] > mapSize[1] || currentP[1] < 0){ return false; }
+	return true;
+}
+
+/**
+ * Verificamos si la poscion y orientacion actuales de un rover coincide con la de un rover perdido
+ * @param  {[array]} currentP [posocion [x,y] actuales del rover]
+ * @param  {[int]} currentO [orientacion actual del rover]
+ * @return {[bool]}
+ */
+function __checkLostRovers(currentP,currentO){	
+	if(lostRovers.length > 0)
+	{
+		for(let lost of lostRovers){	
+			if (JSON.stringify(lost.position)==JSON.stringify(currentP) && lost.orientation == currentO)
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+
 
 module.exports = () => {
 	return {

@@ -1,9 +1,6 @@
 const config	= require("../config")();
 const Maps		= require("./maps.module")();
 let rovers = [];
-
-const __getRoverCollection = async () => { return rovers; }
-
 /**
  * Recoge la información de cada rover de la hoja de ruta: posicion y orientacion iniciales, la ruta del rover
  * @param  {[array]} data [informacion de los rover de la hoja de rutas]
@@ -82,7 +79,6 @@ const __checkRoverData = async (roverData) => {
 }
 module.exports = () => {
 	return {
-		getRoverCollection:__getRoverCollection,
 		setRoverCollection:__setRoverCollection,
 	};
 }
