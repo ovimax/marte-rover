@@ -156,12 +156,6 @@ function __move(rover) {
 	};
 }
 
-function __changeOrientation(currentO,orientation)
-{
-
-}
-
-
 /**
  * Verificamos si el rover se ha salido del mapa
  * @param  {[array]} currentP [Posicion [x,y] del rover]
